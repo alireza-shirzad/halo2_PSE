@@ -13,7 +13,7 @@ pub struct MySpec<F: Field, const WIDTH: usize, const RATE: usize>{
     _marker: PhantomData<F>
 }
 
-impl<F: FieldExt, const WIDTH: usize, const RATE: usize> Spec<F, WIDTH, RATE> for MySpec<F, WIDTH, RATE> {
+impl<F: Field, const WIDTH: usize, const RATE: usize> Spec<F, WIDTH, RATE> for MySpec<F, WIDTH, RATE> {
     fn full_rounds() -> usize {
         8
     }
