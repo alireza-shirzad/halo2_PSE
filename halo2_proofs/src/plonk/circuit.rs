@@ -1538,6 +1538,9 @@ pub struct ConstraintSystem<F: Field> {
     pub(crate) num_selectors: usize,
     pub(crate) num_challenges: usize,
 
+    /// Contains the index of each advice column that is left unblinded.
+    pub(crate) unblinded_advice_columns: Vec<usize>,
+
     /// Contains the phase for each advice column. Should have same length as num_advice_columns.
     pub(crate) advice_column_phase: Vec<sealed::Phase>,
     /// Contains the phase for each challenge. Should have same length as num_challenges.
@@ -1645,6 +1648,7 @@ impl<F: Field> Default for ConstraintSystem<F> {
             num_instance_columns: 0,
             num_selectors: 0,
             num_challenges: 0,
+            unblinded_advice_columns: Vec::new(),
             advice_column_phase: Vec::new(),
             challenge_phase: Vec::new(),
             selector_map: vec![],
@@ -2119,6 +2123,22 @@ impl<F: Field> ConstraintSystem<F> {
             column_type: Fixed,
         };
         self.num_fixed_columns += 1;
+        tmp
+    }
+
+    /// Allocate a new unblinded advice column at `FirstPhase`: its blinding
+    /// rows are zero and its commitment has no blinding factor, so the
+    /// commitment is a deterministic function of the column's values.
+    pub fn unblinded_advice_column(&mut self) -> Column<Advice> {
+        let phase = FirstPhase.to_sealed();
+        let tmp = Column {
+            index: self.num_advice_columns,
+            column_type: Advice { phase },
+        };
+        self.unblinded_advice_columns.push(tmp.index);
+        self.num_advice_columns += 1;
+        self.num_advice_queries.push(0);
+        self.advice_column_phase.push(phase);
         tmp
     }
 

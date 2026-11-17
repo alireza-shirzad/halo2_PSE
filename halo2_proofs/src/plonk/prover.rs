@@ -355,17 +355,26 @@ where
                         .collect(),
                 );
 
-                // Add blinding factors to advice columns
-                for advice_values in &mut advice_values {
-                    for cell in &mut advice_values[unusable_rows_start..] {
-                        *cell = Scheme::Scalar::random(&mut rng);
+                // Add blinding factors to advice columns, except the unblinded
+                // ones, whose commitments must be deterministic.
+                for (column_index, advice_values) in column_indices.iter().zip(&mut advice_values) {
+                    if !meta.unblinded_advice_columns.contains(column_index) {
+                        for cell in &mut advice_values[unusable_rows_start..] {
+                            *cell = Scheme::Scalar::random(&mut rng);
+                        }
                     }
                 }
 
                 // Compute commitments to advice column polynomials
-                let blinds: Vec<_> = advice_values
+                let blinds: Vec<_> = column_indices
                     .iter()
-                    .map(|_| Blind(Scheme::Scalar::random(&mut rng)))
+                    .map(|i| {
+                        if meta.unblinded_advice_columns.contains(i) {
+                            Blind::default()
+                        } else {
+                            Blind(Scheme::Scalar::random(&mut rng))
+                        }
+                    })
                     .collect();
                 let advice_commitments_projective: Vec<_> = advice_values
                     .iter()
